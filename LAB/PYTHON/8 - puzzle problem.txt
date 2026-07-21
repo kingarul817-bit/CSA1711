@@ -1,0 +1,95 @@
+import heapq
+GOAL = (1, 0, 3,
+        4, 5, 6,
+        7, 8, 2)
+def heuristic(state):
+    distance = 0
+    for i in range(9):
+        if state[i] != 0:
+            goal_pos = GOAL.index(state[i])
+            x1, y1 = divmod(i, 3)
+            x2, y2 = divmod(goal_pos, 3)
+            distance += abs(x1 - x2) + abs(y1 - y2)
+    return distance
+def get_neighbors(state):
+    neighbors = []
+    zero = state.index(0)
+
+    moves = {
+        0: [1, 3],
+        1: [0, 2, 4],
+        2: [1, 5],
+        3: [0, 4, 6],
+        4: [1, 3, 5, 7],
+        5: [2, 4, 8],
+        6: [3, 7],
+        7: [4, 6, 8],
+        8: [5, 7]
+    }
+
+    for move in moves[zero]:
+        new_state = list(state)
+        new_state[zero], new_state[move] = new_state[move], new_state[zero]
+        neighbors.append(tuple(new_state))
+
+    return neighbors
+def print_board(state):
+    for i in range(0, 9, 3):
+        row = state[i:i + 3]
+        print(" ".join("_" if x == 0 else str(x) for x in row))
+    print()
+def a_star(start):
+    pq = []
+    heapq.heappush(pq, (heuristic(start), 0, start))
+
+    parent = {}
+    cost = {start: 0}
+    visited = set()
+
+    while pq:
+        f, g, current = heapq.heappop(pq)
+
+        if current in visited:
+            continue
+
+        visited.add(current)
+
+        if current == GOAL:
+            path = []
+            while current in parent:
+                path.append(current)
+                current = parent[current]
+            path.append(start)
+            return path[::-1]
+
+        for neighbor in get_neighbors(current):
+            new_cost = g + 1
+
+            if neighbor not in cost or new_cost < cost[neighbor]:
+                cost[neighbor] = new_cost
+                priority = new_cost + heuristic(neighbor)
+                heapq.heappush(pq, (priority, new_cost, neighbor))
+                parent[neighbor] = current
+
+    return None
+start = (
+    5, 4, 3,
+    6, 1, 8,
+    7, 0, 2
+)
+
+print("Initial State:")
+print_board(start)
+
+solution = a_star(start)
+
+if solution:
+    print("Solution Found!")
+    print("Total Moves:", len(solution) - 1)
+    print()
+
+    for step, board in enumerate(solution):
+        print("Step", step)
+        print_board(board)
+else:
+    print("No Solution Exists.")
